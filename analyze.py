@@ -155,16 +155,6 @@ while cap.isOpened():
     # Capture frame-by-frame
     ret, frame = cap.read()
 
-    point_brightnesses = [[0]*6 for i in range(5)]
-
-    grid_points = calculate_grid_points(polygon, 5, 6)
-    for i in range(len(grid_points) - 1):
-        for j in range(len(grid_points[0]) - 1):
-            points = [grid_points[i][j], grid_points[i][j+1], grid_points[i+1][j], grid_points[i+1][j+1]]
-            x, y = calculate_centroid(points)
-            brightness = sum(frame[int(y), int(x)])
-            point_brightnesses[i][j] = brightness
-
     if ret:
         point_brightnesses = [[0]*6 for i in range(5)]
 
@@ -184,22 +174,6 @@ while cap.isOpened():
             break
     else:
         break
-# Read a single frame
-ret, frame = cap.read()
-
-# Check if the frame was successfully read
-if not ret:
-    print("Error reading frame")
-    exit()
-
-# Specify the pixel coordinates (x, y) you want to get brightness from
-x = 100  # Example x-coordinate
-y = 150  # Example y-coordinate
-
-# Get the brightness (grayscale value) of the pixel at (x, y)
-brightness = sum(frame[y, x])
-
-print(f"Brightness of pixel ({x}, {y}): {brightness}")
 
 # Release the video capture object and close all windows
 cap.release()
