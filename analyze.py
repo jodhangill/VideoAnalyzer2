@@ -139,9 +139,42 @@ while running:
     # Update display
     pygame.display.flip()
 
-# Analyze Video Frames
-# Path to your video file
-video_path = 'your_video.mp4'
+def getBrightness(shape, rows, cols, frame):
+    point_brightnesses = [[0]*6 for i in range(5)]
+    # Get brightnesses of each point
+    grid_points = calculate_grid_points(shape, rows, cols)
+    for i in range(len(grid_points) - 1):
+        for j in range(len(grid_points[0]) - 1):
+            points = [grid_points[i][j], grid_points[i][j+1], grid_points[i+1][j], grid_points[i+1][j+1]]
+            x, y = calculate_centroid(points)
+            brightness = sum(frame[int(y), int(x)])
+            point_brightnesses[i][j] = brightness
+    return point_brightnesses
+
+# Get base brightnesses for each point (Does not work for 1 fps)
+
+# Open the video file
+cap = cv2.VideoCapture(video_path)
+
+min_brightnesses = [[799]*6 for i in range(5)]
+
+if not cap.isOpened():
+    print("Error opening video file")
+    exit()
+else:
+    frame_brightnesses = []
+    for i in range(3):
+        # Capture first 3 frames
+        ret, frame = cap.read()
+        # Get brightness of each point
+        brightnesses = getBrightness(polygon, 5, 6, frame)
+        frame_brightnesses.append(brightnesses)
+    for fb in frame_brightnesses:
+        for i in range(len(fb)):
+            for j in range(len(fb[i])):
+                if fb[i][j] < min_brightnesses[i][j]:
+                    min_brightnesses[i][j] = fb[i][j]
+
 
 # Open the video file
 cap = cv2.VideoCapture(video_path)
@@ -151,27 +184,23 @@ if not cap.isOpened():
     print("Error opening video file")
     exit()
 
+frame_number = 0
 while cap.isOpened():
     # Capture frame-by-frame
     ret, frame = cap.read()
 
     if ret:
-        point_brightnesses = [[0]*6 for i in range(5)]
-
-        # Get brightnesses of each point
-        grid_points = calculate_grid_points(polygon, 5, 6)
-        for i in range(len(grid_points) - 1):
-            for j in range(len(grid_points[0]) - 1):
-                points = [grid_points[i][j], grid_points[i][j+1], grid_points[i+1][j], grid_points[i+1][j+1]]
-                x, y = calculate_centroid(points)
-                brightness = sum(frame[int(y), int(x)])
-                point_brightnesses[i][j] = brightness
-        
-        print(point_brightnesses)
+        brightnesses = getBrightness(polygon, 5, 6, frame)
+        for i in range(len(brightnesses)):
+            for j in range(len(brightnesses[i])):
+                if brightnesses[i][j] > 1.5*min_brightnesses[i][j]:
+                    print(f"Box ({i},{j}) is lit.", end="")
+        print()
 
         # Press 'q' to exit loop
         if cv2.waitKey(25) & 0xFF == ord('q'):
             break
+        frame += 1
     else:
         break
 
